@@ -8,6 +8,7 @@ defmodule ShopifyIntegrationWeb.Router do
     plug :put_root_layout, html: {ShopifyIntegrationWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_secure_browser_headers
   end
 
   pipeline :api do
@@ -18,6 +19,7 @@ defmodule ShopifyIntegrationWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
     # Shopify OAuth routes
     get "/auth/shopify", AuthController, :shopify_oauth
     get "/auth/shopify/callback", AuthController, :shopify_callback

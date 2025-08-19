@@ -1,4 +1,22 @@
 import Config
+import Dotenvy
+
+# Load .env and give precedence to real system env vars
+source!([".env", System.get_env()])
+
+# App runtime configuration from env
+config :shopify_integration, ShopifyIntegration.Shopify.Client,
+  api_key: env!("SHOPIFY_API_KEY", :string),
+  api_secret: env!("SHOPIFY_API_SECRET", :string),
+  redirect_uri: env!("SHOPIFY_REDIRECT_URI", :string, "http://localhost:4000/auth/shopify/callback"),
+  required_scopes: env!(
+    "SHOPIFY_SCOPES",
+    :string,
+    "read_orders,read_all_orders,read_customers"
+  )
+
+config :shopify_integration,
+  default_store_domain: env!("SHOPIFY_STORE_DOMAIN", :string, nil)
 
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the

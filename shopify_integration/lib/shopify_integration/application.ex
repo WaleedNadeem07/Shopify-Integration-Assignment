@@ -7,6 +7,9 @@ defmodule ShopifyIntegration.Application do
 
   @impl true
   def start(_type, _args) do
+    # Load environment variables from .env file
+    Dotenvy.source([".env", ".env.#{Mix.env()}", ".env.#{Mix.env()}.local"])
+
     children = [
       ShopifyIntegrationWeb.Telemetry,
       ShopifyIntegration.Repo,
