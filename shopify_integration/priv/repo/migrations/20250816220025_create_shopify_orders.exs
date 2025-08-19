@@ -9,7 +9,7 @@ defmodule ShopifyIntegration.Repo.Migrations.CreateShopifyOrders do
       add :total_price, :decimal, precision: 10, scale: 2
       add :currency, :string
       add :order_status, :string
-      add :created_at, :utc_datetime, null: false
+      add :inserted_at, :utc_datetime, null: false
       add :updated_at, :utc_datetime, null: false
     end
 

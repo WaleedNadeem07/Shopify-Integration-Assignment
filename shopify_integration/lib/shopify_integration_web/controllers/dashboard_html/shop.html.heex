@@ -1,0 +1,124 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8">
+    <!-- Back to Dashboard Link -->
+    <div class="mb-4">
+      <a href="/dashboard" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-900">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <h1 class="text-3xl font-bold text-gray-900 mb-4">Shop: <%= @shop_domain %></h1>
+    
+    <!-- Shop Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Orders</p>
+            <p class="text-2xl font-semibold text-gray-900"><%= @stats.total_orders %></p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-green-100 text-green-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+            <p class="text-2xl font-semibold text-gray-900">$<%= @stats.total_revenue %> <%= @stats.currency %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fetch Orders Form -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Fetch Orders from Shopify</h3>
+      <form action="/dashboard/fetch_orders" method="post" class="space-y-4">
+        <div>
+          <label for="shop_domain" class="block text-sm font-medium text-gray-700">Shop Domain</label>
+          <input type="text" id="shop_domain" name="shop_domain" value={@shop_domain} readonly
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500">
+        </div>
+        <div>
+          <label for="access_token" class="block text-sm font-medium text-gray-700">Access Token</label>
+          <input type="text" id="access_token" name="access_token" placeholder="Enter your Shopify access token"
+                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+          <p class="mt-1 text-sm text-gray-500">You can get this from the OAuth flow or enter it manually for testing.</p>
+        </div>
+        <div>
+          <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Fetch Orders
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-900">Orders for <%= @shop_domain %></h2>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <%= if Enum.empty?(@orders) do %>
+            <tr>
+              <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                No orders found for this shop. Use the form above to fetch orders from Shopify!
+              </td>
+            </tr>
+          <% else %>
+            <%= for order <- @orders do %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <%= order.shopify_order_id %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%= order.customer_name %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  $<%= order.total_price %> <%= order.currency %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class={get_status_class(order.order_status)}>
+                    <%= String.capitalize(order.order_status) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= Calendar.strftime(order.inserted_at, "%Y-%m-%d %H:%M") %>
+                </td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
