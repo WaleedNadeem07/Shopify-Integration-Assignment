@@ -18,6 +18,9 @@ defmodule ShopifyIntegrationWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    # Shopify OAuth routes
+    get "/auth/shopify", AuthController, :shopify_oauth
+    get "/auth/shopify/callback", AuthController, :shopify_callback
   end
 
   # Other scopes may use custom stacks.
