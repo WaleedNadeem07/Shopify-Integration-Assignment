@@ -21,6 +21,11 @@ defmodule ShopifyIntegrationWeb.Router do
     # Shopify OAuth routes
     get "/auth/shopify", AuthController, :shopify_oauth
     get "/auth/shopify/callback", AuthController, :shopify_callback
+
+    # Dashboard routes
+    get "/dashboard", DashboardController, :index
+    get "/dashboard/shop/:shop_domain", DashboardController, :shop
+    post "/dashboard/fetch_orders", DashboardController, :fetch_orders
   end
 
   # Other scopes may use custom stacks.
