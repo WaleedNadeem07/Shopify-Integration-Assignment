@@ -73,7 +73,6 @@ defmodule ShopifyIntegrationWeb.AuthController do
   def shopify_callback(conn, %{"code" => code, "shop" => shop_domain, "state" => state} = params) do
     Logger.info("OAuth callback received for shop: #{shop_domain}")
 
-    # Validate state parameter to prevent CSRF attacks
     session_state = get_session(conn, :shopify_oauth_state)
     conn = delete_session(conn, :shopify_oauth_state)
 
@@ -83,13 +82,12 @@ defmodule ShopifyIntegrationWeb.AuthController do
       |> put_flash(:error, "Invalid OAuth state. Please try again.")
       |> redirect(to: ~p"/")
     else
-      # Verify HMAC signature from Shopify
+      # Verifies HMAC signature from Shopify
       with :ok <- verify_shopify_hmac(params),
            {:ok, _} <- Client.validate_shop_domain(shop_domain) do
 
         Logger.info("HMAC verification successful for shop: #{shop_domain}")
 
-        # Exchange the authorization code for an access token
         case Client.exchange_code_for_token(shop_domain, code) do
           {:ok, %{"access_token" => access_token} = token_response} ->
             Logger.info("Successfully obtained access token for shop: #{shop_domain}")
@@ -138,7 +136,6 @@ defmodule ShopifyIntegrationWeb.AuthController do
 
   def shopify_callback(conn, _params) do
     Logger.warning("OAuth callback received with invalid parameters")
-    # Handle error cases (missing code, shop, or state)
     conn
     |> put_flash(:error, "OAuth authentication failed. Please try again.")
     |> redirect(to: ~p"/")

@@ -23,7 +23,6 @@ defmodule ShopifyIntegration.Shopify.Orders do
         # Transform and store each order
         results = Enum.map(orders, &store_order(&1, shop_domain))
 
-        # Count successful and failed operations
         successful = Enum.count(results, &match?({:ok, _}, &1))
         failed = Enum.count(results, &match?({:error, _}, &1))
 
@@ -131,7 +130,6 @@ defmodule ShopifyIntegration.Shopify.Orders do
   def get_shop_stats(shop_domain) do
     Logger.debug("Calculating statistics for shop: #{shop_domain}")
 
-    # Get basic stats
     stats_query = from o in Order,
       where: o.shop_domain == ^shop_domain,
       select: %{
@@ -139,7 +137,6 @@ defmodule ShopifyIntegration.Shopify.Orders do
         total_revenue: sum(o.total_price)
       }
 
-    # Get currency (most common one)
     currency_query = from o in Order,
       where: o.shop_domain == ^shop_domain and not is_nil(o.currency),
       group_by: o.currency,

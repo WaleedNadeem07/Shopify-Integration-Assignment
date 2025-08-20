@@ -13,10 +13,8 @@ defmodule ShopifyIntegrationWeb.DashboardController do
   def index(conn, _params) do
     Logger.info("Dashboard index requested")
 
-    # Get all orders for display
     orders = Orders.get_all_orders()
 
-    # Get overall statistics
     stats = get_overall_stats(orders)
 
     Logger.info("Dashboard loaded with #{length(orders)} total orders")
@@ -29,10 +27,8 @@ defmodule ShopifyIntegrationWeb.DashboardController do
   def shop(conn, %{"shop_domain" => shop_domain}) do
     Logger.info("Shop dashboard requested for: #{shop_domain}")
 
-    # Get orders for this specific shop
     orders = Orders.get_shop_orders(shop_domain)
 
-    # Get shop-specific statistics
     case Orders.get_shop_stats(shop_domain) do
       {:ok, stats} ->
         Logger.info("Shop dashboard loaded for: #{shop_domain} with #{length(orders)} orders")
