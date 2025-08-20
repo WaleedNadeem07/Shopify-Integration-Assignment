@@ -4,6 +4,8 @@ defmodule ShopifyIntegration.Shopify.Orders do
   Handles API calls, data transformation, and database operations.
   """
 
+  require Logger
+
   alias ShopifyIntegration.Shopify.{Client, Order}
   alias ShopifyIntegration.Repo
   import Ecto.Query
@@ -12,15 +14,24 @@ defmodule ShopifyIntegration.Shopify.Orders do
   Fetches orders from a Shopify store and stores them in the database.
   """
   def fetch_and_store_orders(shop_domain, access_token) do
-    # Fetch up to 250 orders across any status
+    Logger.info("Starting to fetch orders for shop: #{shop_domain}")
+
     case Client.api_request(shop_domain, access_token, "orders.json?status=any&limit=250") do
       {:ok, %{"orders" => orders}} ->
+        Logger.info("Successfully fetched #{length(orders)} orders from Shopify for shop: #{shop_domain}")
+
         # Transform and store each order
         results = Enum.map(orders, &store_order(&1, shop_domain))
 
         # Count successful and failed operations
         successful = Enum.count(results, &match?({:ok, _}, &1))
         failed = Enum.count(results, &match?({:error, _}, &1))
+
+        if failed > 0 do
+          Logger.warning("Failed to store #{failed} orders for shop: #{shop_domain}")
+        end
+
+        Logger.info("Order processing completed for shop: #{shop_domain}. Total: #{length(orders)}, Successful: #{successful}, Failed: #{failed}")
 
         {:ok, %{
           total_fetched: length(orders),
@@ -30,9 +41,11 @@ defmodule ShopifyIntegration.Shopify.Orders do
         }}
 
       {:error, reason} ->
+        Logger.error("Failed to fetch orders from Shopify for shop: #{shop_domain}. Reason: #{reason}")
         {:error, "Failed to fetch orders: #{reason}"}
 
       _ ->
+        Logger.error("Unexpected response format from Shopify API for shop: #{shop_domain}")
         {:error, "Unexpected response from Shopify API"}
     end
   end
@@ -41,6 +54,8 @@ defmodule ShopifyIntegration.Shopify.Orders do
   Stores a single order in the database.
   """
   def store_order(order_data, shop_domain) do
+    Logger.debug("Processing order #{order_data["id"]} for shop: #{shop_domain}")
+
     # Transform Shopify order data to our schema
     order_attrs = %{
       shopify_order_id: to_string(order_data["id"]),
@@ -55,15 +70,29 @@ defmodule ShopifyIntegration.Shopify.Orders do
     case Repo.get_by(Order, shopify_order_id: order_attrs.shopify_order_id) do
       nil ->
         # Create new order
-        %Order{}
-        |> Order.changeset(order_attrs)
-        |> Repo.insert()
+        case %Order{}
+               |> Order.changeset(order_attrs)
+               |> Repo.insert() do
+          {:ok, order} ->
+            Logger.debug("Successfully created new order #{order.shopify_order_id} for shop: #{shop_domain}")
+            {:ok, order}
+          {:error, changeset} ->
+            Logger.error("Failed to create order #{order_attrs.shopify_order_id} for shop: #{shop_domain}. Errors: #{inspect(changeset.errors)}")
+            {:error, "Failed to create order: #{inspect(changeset.errors)}"}
+        end
 
       existing_order ->
         # Update existing order
-        existing_order
-        |> Order.changeset(order_attrs)
-        |> Repo.update()
+        case existing_order
+               |> Order.changeset(order_attrs)
+               |> Repo.update() do
+          {:ok, order} ->
+            Logger.debug("Successfully updated existing order #{order.shopify_order_id} for shop: #{shop_domain}")
+            {:ok, order}
+          {:error, changeset} ->
+            Logger.error("Failed to update order #{existing_order.shopify_order_id} for shop: #{shop_domain}. Errors: #{inspect(changeset.errors)}")
+            {:error, "Failed to update order: #{inspect(changeset.errors)}"}
+        end
     end
   end
 
@@ -71,25 +100,37 @@ defmodule ShopifyIntegration.Shopify.Orders do
   Retrieves all orders for a specific shop from the database.
   """
   def get_shop_orders(shop_domain) do
-    Order
+    Logger.debug("Fetching orders from database for shop: #{shop_domain}")
+
+    orders = Order
     |> where([o], o.shop_domain == ^shop_domain)
     |> order_by([o], [desc: o.inserted_at])
     |> Repo.all()
+
+    Logger.debug("Retrieved #{length(orders)} orders from database for shop: #{shop_domain}")
+    orders
   end
 
   @doc """
   Retrieves all orders from the database.
   """
   def get_all_orders do
-    Order
+    Logger.debug("Fetching all orders from database")
+
+    orders = Order
     |> order_by([o], [desc: o.inserted_at])
     |> Repo.all()
+
+    Logger.debug("Retrieved #{length(orders)} total orders from database")
+    orders
   end
 
   @doc """
   Gets order statistics for a shop.
   """
   def get_shop_stats(shop_domain) do
+    Logger.debug("Calculating statistics for shop: #{shop_domain}")
+
     # Get basic stats
     stats_query = from o in Order,
       where: o.shop_domain == ^shop_domain,
@@ -108,6 +149,7 @@ defmodule ShopifyIntegration.Shopify.Orders do
 
     case {Repo.one(stats_query), Repo.one(currency_query)} do
       {%{total_orders: total, total_revenue: revenue}, currency} ->
+        Logger.debug("Statistics calculated for shop: #{shop_domain}. Orders: #{total}, Revenue: #{revenue}, Currency: #{currency}")
         {:ok, %{
           total_orders: total,
           total_revenue: revenue || Decimal.new(0),
@@ -115,6 +157,7 @@ defmodule ShopifyIntegration.Shopify.Orders do
         }}
 
       {nil, _} ->
+        Logger.debug("No statistics found for shop: #{shop_domain}, returning defaults")
         {:ok, %{total_orders: 0, total_revenue: Decimal.new(0), currency: "USD"}}
     end
   end
@@ -142,7 +185,9 @@ defmodule ShopifyIntegration.Shopify.Orders do
       _ ->
         case Decimal.parse(trimmed) do
           {decimal, _rest} -> decimal
-          :error -> Decimal.new(0)
+          :error ->
+            Logger.warning("Failed to parse decimal price: #{price}")
+            Decimal.new(0)
         end
     end
   end

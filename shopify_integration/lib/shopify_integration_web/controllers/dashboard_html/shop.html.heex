@@ -43,31 +43,7 @@
       </div>
     </div>
 
-    <!-- Fetch Orders Form -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Fetch Orders from Shopify</h3>
-      <form action="/dashboard/fetch_orders" method="post" class="space-y-4">
-        <div>
-          <label for="shop_domain" class="block text-sm font-medium text-gray-700">Shop Domain</label>
-          <input type="text" id="shop_domain" name="shop_domain" value={@shop_domain} readonly
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500">
-        </div>
-        <div>
-          <label for="access_token" class="block text-sm font-medium text-gray-700">Access Token</label>
-          <input type="text" id="access_token" name="access_token" placeholder="Enter your Shopify access token"
-                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-          <p class="mt-1 text-sm text-gray-500">You can get this from the OAuth flow or enter it manually for testing.</p>
-        </div>
-        <div>
-          <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-            </svg>
-            Fetch Orders
-          </button>
-        </div>
-      </form>
-    </div>
+
   </div>
 
   <!-- Orders Table -->
